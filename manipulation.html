@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Encryptor/Decryptor</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            background-color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        .form-container {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 20px;
+        }
+
+        .input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .button {
+            background-color: #28a745;
+            color: #fff;
+            padding: 12px;
+            font-size: 16px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .button:hover {
+            background-color: #218838;
+        }
+
+        .image-container {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .image-box {
+            width: 32%;
+            text-align: center;
+        }
+
+        .image-box img {
+            width: 100%;
+            height: auto;
+            padding: 10px;
+            border: 2px solid #fff;
+            border-radius: 10px;
+            background-color: #222;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #ccc;
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h1>Image Encryptor/Decryptor</h1>
+
+            <label for="mode">Select Mode:</label>
+            <select id="mode" class="input">
+                <option value="e">Encrypt</option>
+                <option value="d">Decrypt</option>
+            </select>
+
+            <label for="fileInput">Choose Image:</label>
+            <input type="file" id="fileInput" accept="image/*" class="input">
+
+            <label for="key">Enter Encryption/Decryption Key:</label>
+            <input type="number" id="key" placeholder="Enter a numeric key" class="input">
+
+            <button id="processButton" class="button">Start Process</button>
+
+            <div id="resultMessage" class="result"></div>
+
+            <div class="footer">
+                Developed by Syed Zain-Ul-Abideen
+            </div>
+        </div>
+
+        <div class="image-container">
+            <div class="image-box">
+                <h3>Original Image</h3>
+                <img id="originalImage" alt="Original Image" />
+            </div>
+            <div class="image-box">
+                <h3>Encrypted Image</h3>
+                <img id="encryptedImage" alt="Encrypted Image" />
+            </div>
+            <div class="image-box">
+                <h3>Decrypted Image</h3>
+                <img id="decryptedImage" alt="Decrypted Image" />
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('processButton').addEventListener('click', function () {
+            const mode = document.getElementById('mode').value;
+            const fileInput = document.getElementById('fileInput').files[0];
+            const key = parseInt(document.getElementById('key').value, 10);
+            const resultMessage = document.getElementById('resultMessage');
+            const originalImageElement = document.getElementById('originalImage');
+            const encryptedImageElement = document.getElementById('encryptedImage');
+            const decryptedImageElement = document.getElementById('decryptedImage');
+
+            if (!fileInput || isNaN(key)) {
+                resultMessage.textContent = 'Please provide both the file and a valid numeric key.';
+                resultMessage.style.color = 'red';
+                return;
+            }
+
+            const reader = new FileReader();
+            
+            reader.onload = function (event) {
+                // Display the original image
+                originalImageElement.src = event.target.result;
+
+                const arrayBuffer = event.target.result;
+                const byteArray = new Uint8Array(arrayBuffer);
+
+                // Perform XOR encryption
+                const encryptedByteArray = new Uint8Array(byteArray.length);
+                for (let i = 0; i < byteArray.length; i++) {
+                    encryptedByteArray[i] = byteArray[i] ^ key;
+                }
+
+                // Create a blob for the encrypted image
+                const encryptedBlob = new Blob([encryptedByteArray], { type: fileInput.type });
+                const encryptedUrl = URL.createObjectURL(encryptedBlob);
+                encryptedImageElement.src = encryptedUrl;
+
+                // Decrypt the encrypted image to verify it
+                const decryptedByteArray = new Uint8Array(encryptedByteArray.length);
+                for (let i = 0; i < encryptedByteArray.length; i++) {
+                    decryptedByteArray[i] = encryptedByteArray[i] ^ key;
+                }
+
+                // Create a blob for the decrypted image
+                const decryptedBlob = new Blob([decryptedByteArray], { type: fileInput.type });
+                const decryptedUrl = URL.createObjectURL(decryptedBlob);
+                decryptedImageElement.src = decryptedUrl;
+
+                // Show success message
+                resultMessage.innerHTML = `<p style="color: green;">${mode === 'e' ? 'Encryption' : 'Decryption'} completed successfully!</p>`;
+            };
+
+            // Read the image as Data URL for display
+            reader.readAsDataURL(fileInput);
+        });
+    </script>
+</body>
+</html>
